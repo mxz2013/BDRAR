@@ -1,5 +1,6 @@
 import datetime
 import os
+import pytz
 
 import torch
 from torch import nn
@@ -24,7 +25,7 @@ exp_name = 'BDRAR'
 
 # batch size of 8 with resolution of 416*416 is exactly OK for the GTX 1080Ti GPU
 args = {
-    'iter_num': 3000,
+    'iter_num': 3,
     'train_batch_size': 8,
     'last_iter': 0,
     'lr': 5e-3,
@@ -51,9 +52,11 @@ to_pil = transforms.ToPILImage()
 
 train_set = ImageFolder(sbu_training_root, joint_transform, img_transform, target_transform)
 train_loader = DataLoader(train_set, batch_size=args['train_batch_size'], num_workers=8, shuffle=True)
-
+# 1000
+tz_paris = pytz.timezone('Europe/Paris')
+start_time = datetime.datetime.now(tz_paris).strftime("%Y_%m_%d_%H_%M_%S")
 bce_logit = nn.BCEWithLogitsLoss().cuda()
-log_path = os.path.join(ckpt_path, exp_name, str(datetime.datetime.now()) + '.txt')
+log_path = os.path.join(ckpt_path, exp_name, start_time + '.txt')
 
 
 def main():
@@ -69,6 +72,7 @@ def main():
     if len(args['snapshot']) > 0:
         print('training resumes from \'%s\'' % args['snapshot'])
         net.load_state_dict(torch.load(os.path.join(ckpt_path, exp_name, args['snapshot'] + '.pth')))
+
         optimizer.load_state_dict(torch.load(os.path.join(ckpt_path, exp_name, args['snapshot'] + '_optim.pth')))
         optimizer.param_groups[0]['lr'] = 2 * args['lr']
         optimizer.param_groups[1]['lr'] = args['lr']
@@ -132,19 +136,43 @@ def train(net, optimizer):
 
             curr_iter += 1
 
-            log = '[iter %d], [train loss %.5f], [loss_fuse %.5f], [loss1_h2l %.5f], [loss2_h2l %.5f], ' \
-                  '[loss3_h2l %.5f], [loss4_h2l %.5f], [loss1_l2h %.5f], [loss2_l2h %.5f], [loss3_l2h %.5f], ' \
-                  '[loss4_l2h %.5f], [lr %.13f]' % \
+            log = '%d, %.5f, %.5f, %.5f, %.5f, ' \
+                  '%.5f, %.5f, %.5f, %.5f,  %.5f, ' \
+                  '%.5f, %.13f' % \
                   (curr_iter, train_loss_record.avg, loss_fuse_record.avg, loss1_h2l_record.avg, loss2_h2l_record.avg,
                    loss3_h2l_record.avg, loss4_h2l_record.avg, loss1_l2h_record.avg, loss2_l2h_record.avg,
                    loss3_l2h_record.avg, loss4_l2h_record.avg, optimizer.param_groups[1]['lr'])
-            print log
+            print(log)
             open(log_path, 'a').write(log + '\n')
 
             if curr_iter > args['iter_num']:
                 torch.save(net.state_dict(), os.path.join(ckpt_path, exp_name, '%d.pth' % curr_iter))
+                torch.save(optimizer.state_dict(), os.path.join(ckpt_path, exp_name, '%d.optim_pth' % curr_iter))
+                # ---
+                # predicted = fuse_predict
+                # target = labels
+                # fp = ((predicted == 1) & (target == 0)).sum().item()
+                # fn = ((predicted == 0) & (target == 1)).sum().item()
+                # tp = ((predicted == 1) & (target == 1)).sum().item()
+                # tn = ((predicted == 0) & (target == 0)).sum().item()
+                #
+                # confusion_matrix = torch.tensor([[tp, fp], [fn, tn]])
+                #
+                # confusion_matrix = confusion_matrix.float() / confusion_matrix.sum()
+                # confusion_matrix = confusion_matrix.numpy()
+                # print("confusion_matrix", confusion_matrix)
+
+                # from sklearn.metrics import ConfusionMatrixDisplay
+                # import matplotlib.pyplot as plt
+                # disp = ConfusionMatrixDisplay(confusion_matrix=confusion_matrix, display_labels=["masked", "empty"])
+                # disp.plot(cmap=plt.cm.Blues)
+                # plt.show()
+                # ---
                 return
 
-
+# starting_loss = infi
+# loss_i < loss_0  then loss_0 = loss_i
+# loss_i+1 < loss_0, loss_0 =
+# early stopping
 if __name__ == '__main__':
     main()

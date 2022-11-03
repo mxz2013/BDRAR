@@ -8,8 +8,9 @@ from PIL import Image
 def make_dataset(root):
     img_list = [os.path.splitext(f)[0] for f in os.listdir(os.path.join(root, 'ShadowImages')) if f.endswith('.jpg')]
     return [
-        (os.path.join(root, 'ShadowImages', img_name + '.jpg'), os.path.join(root, 'ShadowMasks', img_name + '.png'))
-        for img_name in img_list]
+        (os.path.join(root, 'ShadowImages', img_name + '.jpg') if os.path.exists(os.path.join(root, 'ShadowImages', img_name + '.jpg')) else
+         os.path.join(root, 'ShadowImages', img_name + '.png'), os.path.join(root, 'ShadowMasks', img_name + '.png') if
+        os.path.exists(os.path.join(root, 'ShadowMasks', img_name + '.png')) else os.path.join(root, 'ShadowMasks', img_name + '.jpg')) for img_name in img_list]
 
 
 class ImageFolder(data.Dataset):

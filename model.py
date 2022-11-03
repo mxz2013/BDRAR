@@ -106,7 +106,7 @@ class BDRAR(nn.Module):
         )
 
         for m in self.modules():
-            if isinstance(m, nn.ReLU) or isinstance(m, nn.Dropout):
+            if isinstance(m, nn.ReLU): # or isinstance(m, nn.Dropout):
                 m.inplace = True
 
     def forward(self, x):
