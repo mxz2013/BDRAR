@@ -4,13 +4,27 @@ import os.path
 import torch.utils.data as data
 from PIL import Image
 
+def check_img_ext(path, img_name):
+    possible_ext = ['.jpg', '.png', '.jpeg']
+    path = os.path.join(path, img_name)
+    for i, ext in enumerate(possible_ext):
+        if os.path.exists(path + ext):
+            return ext
+    print("File extensions are not in the list of \n", possible_ext)
+
+    os.system("ls " + path + "*")
+    return None
+
 
 def make_dataset(root):
-    img_list = [os.path.splitext(f)[0] for f in os.listdir(os.path.join(root, 'ShadowImages')) if f.endswith('.jpg')]
-    return [
-        (os.path.join(root, 'ShadowImages', img_name + '.jpg') if os.path.exists(os.path.join(root, 'ShadowImages', img_name + '.jpg')) else
-         os.path.join(root, 'ShadowImages', img_name + '.png'), os.path.join(root, 'ShadowMasks', img_name + '.png') if
-        os.path.exists(os.path.join(root, 'ShadowMasks', img_name + '.png')) else os.path.join(root, 'ShadowMasks', img_name + '.jpg')) for img_name in img_list]
+    img_list = [os.path.splitext(f)[0] for f in os.listdir(os.path.join(root, 'ShadowImages')) if f.endswith('.jpg') or f.endswith('jpg') or f.endswith('.jpeg')]
+    img_shadow_pair = []
+    for img_name in img_list:
+        ext_img = check_img_ext(os.path.join(root, 'ShadowImages'), img_name)
+        ext_msk = check_img_ext(os.path.join(root, 'ShadowMasks'), img_name)
+        img_shadow_pair.append((os.path.join(root, 'ShadowImages', img_name + ext_img), os.path.join(root, 'ShadowMasks', img_name + ext_msk)))
+
+    return img_shadow_pair
 
 
 class ImageFolder(data.Dataset):

@@ -1,4 +1,5 @@
 import datetime
+import time
 import os
 import pytz
 
@@ -15,17 +16,18 @@ from config import sbu_training_root
 from dataset import ImageFolder
 from misc import AvgMeter, check_mkdir
 from model import BDRAR
+import torch.nn.functional as F
 
 cudnn.benchmark = True
 
 torch.cuda.set_device(0)
 
 ckpt_path = './ckpt'
-exp_name = 'BDRAR'
+exp_name = 'sbu_hungerstation_glovo'
 
 # batch size of 8 with resolution of 416*416 is exactly OK for the GTX 1080Ti GPU
 args = {
-    'iter_num': 3,
+    'iter_num': 3000,
     'train_batch_size': 8,
     'last_iter': 0,
     'lr': 5e-3,
@@ -170,9 +172,21 @@ def train(net, optimizer):
                 # ---
                 return
 
+# def calculate_matrix(truth, predictions):
+#
+#     predictions = F.sigmoid(predictions)
+
+
 # starting_loss = infi
 # loss_i < loss_0  then loss_0 = loss_i
 # loss_i+1 < loss_0, loss_0 =
 # early stopping
 if __name__ == '__main__':
+    tz_paris = pytz.timezone('Europe/Paris')
+    t_s = datetime.datetime.now(tz_paris).strftime("%Y_%m_%d_%H_%M_%S")
+    t1 = time.time()
+    print("Training start at ".format(t_s))
     main()
+    print("training end at {}, system shutdown in 1 minute.".format(datetime.datetime.now(tz_paris).strftime("%Y_%m_%d_%H_%M_%S")))
+    print("total training time in hours ", (time.time() - t1) / 3600)
+    os.system("sudo shutdown")
