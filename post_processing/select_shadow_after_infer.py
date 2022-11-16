@@ -15,7 +15,6 @@ def filter_based_on_npy(file_name):
         return round(good_shadow_pix_ratio,3), True  # filtered
 
 
-
 def check_mkdir(dir_name):
     if not os.path.exists(dir_name):
         os.mkdir(dir_name)
@@ -206,7 +205,7 @@ def average_entropy(im):
     e = 0
     for i in range(n_channel):
         p = np.array([(im[:, :, i] == v).sum() for v in range(1, 256)])
-        p = p / p.sum()
+        p = p / p.sum() if p.sum != 0 else 0
         # Compute e = -sum(p(g)*log2(p(g)))
         e += -(p[p > 0] * np.log2(p[p > 0])).sum()
 
@@ -425,26 +424,27 @@ def calculate_n_connected_objects(binary_img, img_show=False):
         # three tests
         if all((keepWidth, keepHeight, keepArea)):
             n_connected += 1
-            # construct a mask for the current connected component and
-            # then take the bitwise OR with the mask
-            print("[INFO] keeping connected component '{}'".format(i))
-            componentMask = (labels == i).astype("uint8") * 255
-            mask = cv2.bitwise_or(mask, componentMask)
 
-            (cX, cY) = centroids[i]
-            # clone our original image (so we can draw on it) and then draw
-            # a bounding box surrounding the connected component along with
-            # a circle corresponding to the centroid
-            output = thresh.copy()
-            cv2.rectangle(output, (x, y), (x + w, y + h), (0, 255, 0), 3)
-            cv2.circle(output, (int(cX), int(cY)), 4, (0, 0, 255), -1)
-
-            # construct a mask for the current connected component by
-            # finding a pixels in the labels array that have the current
-            # connected component ID
-            componentMask = (labels == i).astype("uint8") * 255
-            img_tmp = np.concatenate((output, componentMask), axis=1)
             if img_show:
+                # construct a mask for the current connected component and
+                # then take the bitwise OR with the mask
+                print("[INFO] keeping connected component '{}'".format(i))
+                componentMask = (labels == i).astype("uint8") * 255
+                mask = cv2.bitwise_or(mask, componentMask)
+
+                (cX, cY) = centroids[i]
+                # clone our original image (so we can draw on it) and then draw
+                # a bounding box surrounding the connected component along with
+                # a circle corresponding to the centroid
+                output = thresh.copy()
+                cv2.rectangle(output, (x, y), (x + w, y + h), (0, 255, 0), 3)
+                cv2.circle(output, (int(cX), int(cY)), 4, (0, 0, 255), -1)
+
+                # construct a mask for the current connected component by
+                # finding a pixels in the labels array that have the current
+                # connected component ID
+                componentMask = (labels == i).astype("uint8") * 255
+                img_tmp = np.concatenate((output, componentMask), axis=1)
                 cv2.namedWindow("result_" + str(i), cv2.WINDOW_NORMAL)
                 cv2.imshow("result_" + str(i), img_tmp)
                 key = cv2.waitKey(0)
@@ -455,16 +455,20 @@ def calculate_n_connected_objects(binary_img, img_show=False):
 
 
 if __name__ == "__main__":
-    original_dir = "/Users/sky/Documents/data_glovo/original"
-    clipped_dir = "/Users/sky/Documents/data_glovo/clipped"
-    mask_dir = "/Users/sky/PycharmProjects/BDRAR_SKY/BDRAR/ckpt/BDRAR/2022_11_09_20_50_48/BDRAR_glovo_prediction_3001"
+    # original_dir = "/Users/sky/Documents/data_glovo/original"
+    # clipped_dir = "/Users/sky/Documents/data_glovo/clipped"
+    # mask_dir = "/Users/sky/PycharmProjects/BDRAR_SKY/BDRAR/ckpt/BDRAR/2022_11_09_20_50_48/BDRAR_glovo_prediction_3001"
+    original_dir = "/Users/sky/Documents/data_yemek/original_images"
+    clipped_dir = "/Users/sky/Documents/data_yemek/clipped_images"
+    mask_dir = "/Users/sky/PycharmProjects/BDRAR_SKY/BDRAR/ckpt/sbu_hungerstation_glovo_yemek/2022_11_14_16_08_58/sbu_hungerstation_glovo_yemek_yemek_prediction_3001"
+
     tz_paris = pytz.timezone('Europe/Paris')
     start_time = datetime.datetime.now(tz_paris).strftime("%Y_%m_%d_%H_%M_%S")
     print("start time", start_time)
     IMSHOW = False
-    output_path = "/Users/sky/Documents/data_glovo/select_shadow_after_inference" + start_time
+    output_path = "/Users/sky/Documents/data_yemek/select_shadow_after_inference" + start_time
     score_threshold = 0.7
-    ratio_threshold = [0.3, 0.7]
+    ratio_threshold = [0.3, 1.0]
     # np.load("/Users/sky/PycharmProjects/BDRAR_SKY/BDRAR/ckpt/BDRAR/calculate_precision_recall/BDRAR_hungerstation_prediction_3001_with_npy/b76a1fe8d460cad0c3cfbea4e7a66c18.npy")
 
     filename_list = [
@@ -473,8 +477,8 @@ if __name__ == "__main__":
         if os.path.isfile(os.path.join(original_dir, f))
     ]
     # filename_list = ['qqqey3j47enxhmgh8y5v']
+    filename_list.sort()
     result_dict = {}
-    ab_threshold = 100
 
     img_name_list = []
     ab_mean_list = []
@@ -496,10 +500,9 @@ if __name__ == "__main__":
             clip_img_path = os.path.join(clipped_dir, file_name + clip_ext)
             if os.path.exists(orig_img_path) and os.path.exists(clip_img_path):
                 clip_img_shape = cv2.imread(clip_img_path, -1).shape
-                print("clip shape", clip_img_shape)
                 if clip_img_shape[-1] == 4:
                     n_columns += 1
-                    print("n_image", n_columns)
+                    print("processing {} / {} ".format(n_columns, len(filename_list)))
                     result_dict[file_name] = []
                     check_bg(file_name, result_dict, output_path)
     df = pd.DataFrame(

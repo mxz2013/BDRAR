@@ -5,7 +5,7 @@ import pandas as pd
 
 def main():
     csv_name = 'select_best_shadow.csv'
-    data_dir = '/Users/sky/Documents/data_glovo/select_shadow_after_inference2022_11_10_09_39_27'
+    data_dir = '/Users/sky/Documents/data_yemek/select_shadow_after_inference2022_11_15_10_55_06'
     csv_path = os.path.join(data_dir, csv_name)
     shadow_mask_path = os.path.join(data_dir, 'with_shadow')
     img_names = os.listdir(shadow_mask_path)

@@ -26,6 +26,18 @@ def check_mkdir(dir_name):
         os.makedirs(dir_name)
 
 
+def check_img_ext(path, img_name):
+    possible_ext = ['.jpg', '.png', '.jpeg']
+    path = os.path.join(path, img_name)
+    for i, ext in enumerate(possible_ext):
+        if os.path.exists(path + ext):
+            return ext
+    print("File extensions are not in the list of \n", possible_ext)
+
+    os.system("ls " + path + "*")
+    return None
+
+
 def _sigmoid(x):
     return 1 / (1 + np.exp(-x))
 

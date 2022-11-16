@@ -3,17 +3,8 @@ import os.path
 
 import torch.utils.data as data
 from PIL import Image
+from misc import check_img_ext
 
-def check_img_ext(path, img_name):
-    possible_ext = ['.jpg', '.png', '.jpeg']
-    path = os.path.join(path, img_name)
-    for i, ext in enumerate(possible_ext):
-        if os.path.exists(path + ext):
-            return ext
-    print("File extensions are not in the list of \n", possible_ext)
-
-    os.system("ls " + path + "*")
-    return None
 
 
 def make_dataset(root):

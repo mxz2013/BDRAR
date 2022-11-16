@@ -24,9 +24,12 @@ def main(save_img=False):
     print("number of shadow images ", len(img_name_no_duplicates))
     n_shadow = 0
     for i, img in enumerate(img_name_no_duplicates):
-        original_img = os.path.join(original_path, img + '.jpeg')
-        clip_img = os.path.join(clipped_path, img + '.jpeg' )
-        shadow_msk = os.path.join(full_shadow_mask_path, img + '.jpg')
+        ori_ext = check_img_ext(original_path, img)
+        original_img = os.path.join(original_path, img + ori_ext) # '.jpeg')
+        clip_ext = check_img_ext(clipped_path, img)
+        clip_img = os.path.join(clipped_path, img + clip_ext) #'.jpeg')
+        shadow_ext = check_img_ext(full_shadow_mask_path, img)
+        shadow_msk = os.path.join(full_shadow_mask_path, img + shadow_ext) # '.jpg')
         gray_mask = cv2.imread(shadow_msk, 0)
 
         if os.path.exists(shadow_msk):
@@ -105,15 +108,17 @@ def select_training_test_validation(data_path):
 
 if __name__ == '__main__':
     csv_name = 'select_best_shadow.csv'
-    data_dir = '/Users/sky/Documents/data_glovo/select_shadow_after_inference2022_11_10_09_39_27'
+    data_dir = '/Users/sky/Documents/data_yemek/select_shadow_after_inference2022_11_15_10_55_06'
     csv_path = os.path.join(data_dir, csv_name)
     full_shadow_mask_path = os.path.join(data_dir, 'shadow_mask_RGB')  # merged shadow mask without selection
+    original_path = "/Users/sky/Documents/data_yemek/original_images"
+    clipped_path = "/Users/sky/Documents/data_yemek/clipped_images"
     # original_path = "/Users/sky/Documents/s3_data/round1/7K_sample"
     # clipped_path = "/Users/sky/Documents/s3_data/round1/7K_clipped"
-    original_path = "/Users/sky/Documents/data_glovo/original"
-    clipped_path = "/Users/sky/Documents/data_glovo/clipped"
+    # original_path = "/Users/sky/Documents/data_glovo/original"
+    # clipped_path = "/Users/sky/Documents/data_glovo/clipped"
 
-    shadow_dataset_name = 'glovo_shadow_dataset'
+    shadow_dataset_name = 'yemek_shadow_dataset'
     shadow_img_path = os.path.join(data_dir, shadow_dataset_name, 'shadow_images')  # original img after selection
     shadow_msk_path = os.path.join(data_dir, shadow_dataset_name, 'shadow_masks')  # shadow mask after selection
     obj_msk_path = os.path.join(data_dir, shadow_dataset_name, 'object_masks')  # object mask after selection
@@ -127,6 +132,6 @@ if __name__ == '__main__':
         os.makedirs(obj_msk_path)
     if not os.path.exists(test_img_save_dir):
         os.makedirs(test_img_save_dir)
-    # main(save_img=False)
+    main(save_img=False)
 
     select_training_test_validation(os.path.join(data_dir, shadow_dataset_name))
